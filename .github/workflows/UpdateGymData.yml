@@ -1,0 +1,22 @@
+name: Update Gym Data
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Runs every 30 mins
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - run: npm install node-fetch
+      - run: node update_data.js
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Update gym history
+          file_pattern: gym_history.json
