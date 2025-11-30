@@ -3,7 +3,11 @@ import { RAW_DATA_GLATTPARK, parseRawData } from '../data/initialData';
 
 const STORAGE_KEY = 'gym_pulse_data_v4'; 
 const SERVER_URL = 'http://localhost:3001'; // Optional: For local dev with server.js
-const STATIC_FILE_URL = './gym_history.json'; // For GitHub Pages / Static hosting
+
+// Use the RAW GitHub URL to ensure we can fetch the file even if it's not in the build output
+// Replace 'felixherrman/Fitnesspark_utilization' with your actual repo if different, 
+// but based on your logs, this is correct.
+const STATIC_FILE_URL = 'https://raw.githubusercontent.com/felixherrman/Fitnesspark_utilization/main/gym_history.json';
 
 const DEFAULT_GYMS: GymConfig[] = [
   {
@@ -29,7 +33,9 @@ export const loadGyms = async (): Promise<{ data: GymData[], source: 'server' | 
 
   // 2. Try fetching from Static Cloud File (GitHub Pages Mode)
   try {
-    const response = await fetch(STATIC_FILE_URL, { cache: "no-store" }); // no-store to get fresh version
+    // We add a timestamp query param to bust the cache slightly, 
+    // although GitHub Raw has its own caching policies.
+    const response = await fetch(`${STATIC_FILE_URL}?t=${Date.now()}`, { cache: "no-store" });
     if (response.ok) {
       // The file structure in the static file matches the server structure:
       // { glattpark: [DataPoint, DataPoint...] }
@@ -50,6 +56,7 @@ export const loadGyms = async (): Promise<{ data: GymData[], source: 'server' | 
     }
   } catch (e) {
     // File not found (first run), continue...
+    console.warn("Could not load cloud history:", e);
   }
 
   // 3. Fallback to Local Storage

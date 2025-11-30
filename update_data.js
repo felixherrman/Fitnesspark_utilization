@@ -4,11 +4,14 @@
  * Command: node update_data.js
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fetch from 'node-fetch';
 
-// Dynamic import for fetch (ESM/CommonJS compat)
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+// Reconstruct __dirname for ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const DATA_FILE = path.join(__dirname, 'gym_history.json');
 
@@ -23,7 +26,6 @@ const GYMS = [
 // Helper to get raw numeric data
 async function fetchVisitors(url) {
   try {
-    // Direct fetch (Node.js doesn't need CORS proxy)
     const res = await fetch(url, { headers: { 'User-Agent': 'GymPulse-Updater' } });
     if (!res.ok) throw new Error(res.statusText);
     const text = await res.text();
@@ -42,7 +44,8 @@ async function run() {
   let db = {};
   if (fs.existsSync(DATA_FILE)) {
     try {
-      db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      const content = fs.readFileSync(DATA_FILE, 'utf8');
+      db = JSON.parse(content);
     } catch (e) {
       console.error("Error reading DB, starting fresh.");
     }
@@ -63,6 +66,7 @@ async function run() {
       
       // Prevent duplicates if run too frequently (check last timestamp)
       const last = db[gym.id][db[gym.id].length - 1];
+      // Only add if last point is older than 1 minute to avoid dupes
       if (!last || (Date.now() - last.timestamp > 60000)) {
          db[gym.id].push(newPoint);
          console.log(`Updated ${gym.id}: ${visitors}`);
