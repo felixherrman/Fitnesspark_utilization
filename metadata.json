@@ -1,0 +1,5 @@
+{
+  "name": "GymPulse",
+  "description": "Real-time gym utilization tracker with historical analytics and AI-powered trend predictions.",
+  "requestFramePermissions": []
+}
